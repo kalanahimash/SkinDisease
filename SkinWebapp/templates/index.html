@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skin Disease Vision Lab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at top, #c9e6ff, #f8fbff 45%, #ffffff 80%);
+            --primary: #2962ff;
+            --primary-dark: #1c3aa9;
+            --accent: #00c9a7;
+            --text: #1b1f3b;
+            --muted: #6b7391;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+        .hero {
+            text-align: center;
+            padding: 48px 16px 32px;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 12px;
+        }
+        .hero p {
+            margin: 0 auto;
+            max-width: 640px;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+        .dashboard {
+            max-width: 1100px;
+            margin: 0 auto 60px;
+            padding: 0 20px 40px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 25px 60px rgba(41, 98, 255, 0.1);
+            padding: 28px;
+        }
+        .upload-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .upload-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(41, 98, 255, 0.12), transparent 55%);
+            pointer-events: none;
+        }
+        .drop-area {
+            border: 1.5px dashed rgba(41, 98, 255, 0.4);
+            border-radius: 14px;
+            padding: 28px;
+            text-align: center;
+            transition: border 0.2s ease, background 0.2s ease;
+        }
+        .drop-area:hover {
+            border-color: var(--primary);
+            background: rgba(41, 98, 255, 0.05);
+        }
+        input[type="file"] {
+            margin-top: 16px;
+            width: 100%;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(120deg, var(--primary), var(--accent));
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px rgba(41, 98, 255, 0.25);
+        }
+        .stats {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        .stat-chip {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(41, 98, 255, 0.08);
+        }
+        .stat-chip span {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .stat-chip strong {
+            font-size: 1.25rem;
+        }
+        .preview {
+            border-radius: 14px;
+            overflow: hidden;
+            background: #0f172a;
+            position: relative;
+            min-height: 260px;
+        }
+        .preview img {
+            width: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .preview-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.7);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+        }
+        .message {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .error {
+            background: #ffe2e2;
+            color: #c0392b;
+        }
+        .success {
+            background: #e8fff7;
+            color: #0a6640;
+        }
+        .predictions {
+            margin-top: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .pred-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .pred-row .label {
+            font-weight: 600;
+        }
+        .prob-bar {
+            flex: 1;
+            height: 10px;
+            border-radius: 999px;
+            background: #ecf1ff;
+            overflow: hidden;
+        }
+        .prob-bar span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(120deg, var(--primary), var(--accent));
+        }
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            padding-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <h1>Skin Disease Vision Lab</h1>
+        <p>Upload a clinical skin photo and let the {{ model_name }} model ({{ class_count }} classes) analyze it. The dashboard returns the top predictions in milliseconds along with a preview of the uploaded image.</p>
+    </header>
+
+    <main class="dashboard">
+        <div class="grid">
+            <section class="card upload-card">
+                <h2>Upload &amp; Diagnose</h2>
+                <p>Supports JPG / PNG up to 10MB. Your image stays local to this machine.</p>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="drop-area">
+                        <strong>Drop your dermoscopy scan here</strong>
+                        <div>or click to browse</div>
+                        <input type="file" name="image" accept="image/*" required>
+                    </div>
+                    <button type="submit">Run Prediction</button>
+                </form>
+                <div class="stats">
+                    <div class="stat-chip">
+                        <span>Model</span>
+                        <strong>{{ model_name }}</strong>
+                    </div>
+                    <div class="stat-chip">
+                        <span>Inference</span>
+                        <strong>
+                            {% if inference_ms %}
+                                {{ '%.1f'|format(inference_ms) }} ms
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="stat-chip">
+                        <span>Confidence</span>
+                        <strong>
+                            {% if confidence %}
+                                {{ '%.1f'|format(confidence * 100) }}%
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+
+                {% if error %}
+                    <div class="message error">{{ error }}</div>
+                {% endif %}
+
+                {% if prediction %}
+                    <div class="message success">
+                        Primary diagnosis:&nbsp;<strong>{{ prediction }}</strong>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="card">
+                <h2>Preview</h2>
+                <div class="preview">
+                    {% if preview_data %}
+                        <img src="data:image/jpeg;base64,{{ preview_data }}" alt="Uploaded preview">
+                    {% else %}
+                        <div class="preview-placeholder">
+                            Awaiting upload
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h3 style="margin-top:24px;">Top probabilities</h3>
+                <div class="predictions">
+                    {% if top_predictions %}
+                        {% for item in top_predictions %}
+                            <div class="pred-row">
+                                <div class="label">{{ item.label }}</div>
+                                <div class="prob-bar">
+                                    <span style="width: {{ '%.2f'|format(item.score * 100) }}%;"></span>
+                                </div>
+                                <div class="value">{{ '%.1f'|format(item.score * 100) }}%</div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: var(--muted);">No predictions yet. Upload an image to view probabilities.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        Model input is auto-resized to 224×224 and normalized with the EfficientNet preprocessing pipeline used in training.
+    </footer>
+</body>
+</html>
